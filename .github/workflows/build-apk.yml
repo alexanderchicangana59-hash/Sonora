@@ -1,0 +1,44 @@
+name: Construir APK de Sonora
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Descomprimir proyecto Android
+        run: |
+          mkdir proyecto
+          unzip -q Sonora_Android_Sonora_v2.zip -d proyecto
+
+      - name: Buscar proyecto
+        run: |
+          PROJECT_DIR=$(dirname "$(find proyecto -name settings.gradle -o -name settings.gradle.kts | head -n 1)")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
+
+      - name: Construir APK
+        run: |
+          cd "$PROJECT_DIR"
+          gradle assembleDebug --no-daemon
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sonora-APK
+          path: '**/app/build/outputs/apk/debug/app-debug.apk'
